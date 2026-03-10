@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Heart Rate Monitor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── CSS Custom Properties ─────────────────────────────────────── */
+    :root {
+      --bg:        #080a0f;
+      --panel:     #0d1117;
+      --border:    #1a2030;
+      --red:       #ff2d55;
+      --red-glow:  rgba(255, 45, 85, 0.55);
+      --red-dim:   rgba(255, 45, 85, 0.15);
+      --green:     #00e676;
+      --green-glow:rgba(0, 230, 118, 0.5);
+      --text:      #e8ecf4;
+      --muted:     #4a5568;
+      --font-hud:  'Orbitron', monospace;
+      --font-body: 'Inter', sans-serif;
+    }
+
+    /* ─── Reset & Base ───────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    /* Subtle scanline texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.07) 2px,
+        rgba(0,0,0,0.07) 4px
+      );
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* ─── Layout Wrapper ─────────────────────────────────────────────── */
+    .monitor {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ─── Header ─────────────────────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4px;
+    }
+    .header-title {
+      font-family: var(--font-hud);
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green-glow);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-hud);
+      font-size: 11px;
+      color: var(--green);
+    }
+
+    /* ─── Heart Panel ────────────────────────────────────────────────── */
+    .heart-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 36px 24px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Radial glow behind heart */
+    .heart-panel::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -60%);
+      width: 220px; height: 220px;
+      background: radial-gradient(circle, var(--red-dim) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── SVG Heart ── */
+    .heart-wrap {
+      position: relative;
+      width: 110px; height: 110px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .heart-svg {
+      width: 100px; height: 100px;
+      filter: drop-shadow(0 0 18px var(--red-glow));
+      /* Animation duration set by JS via --beat-duration */
+      animation: heartbeat var(--beat-duration, 0.857s) ease-in-out infinite;
+      transform-origin: center;
+    }
+    @keyframes heartbeat {
+      0%   { transform: scale(1);    }
+      14%  { transform: scale(1.22); }
+      28%  { transform: scale(1);    }
+      42%  { transform: scale(1.12); }
+      56%  { transform: scale(1);    }
+      100% { transform: scale(1);    }
+    }
+
+    /* ── BPM Display ── */
+    .bpm-value {
+      font-family: var(--font-hud);
+      font-size: 88px;
+      font-weight: 900;
+      line-height: 1;
+      color: var(--red);
+      text-shadow: 0 0 30px var(--red-glow), 0 0 60px rgba(255,45,85,0.25);
+      letter-spacing: -2px;
+      transition: color 0.5s;
+    }
+    .bpm-label {
+      font-family: var(--font-hud);
+      font-size: 13px;
+      letter-spacing: 0.3em;
+      color: var(--muted);
+    }
+
+    /* ── Zone Badge ── */
+    .zone-badge {
+      margin-top: 6px;
+      padding: 5px 16px;
+      border-radius: 100px;
+      font-family: var(--font-hud);
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      font-weight: 700;
+      transition: background 0.5s, color 0.5s, box-shadow 0.5s;
+    }
+
+    /* ─── Stats Row ──────────────────────────────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    .stat-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 10px;
+      text-align: center;
+    }
+    .stat-value {
+      font-family: var(--font-hud);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .stat-label {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+
+    /* ─── ECG Panel ──────────────────────────────────────────────────── */
+    .ecg-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 16px;
+      position: relative;
+    }
+    .ecg-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .ecg-title {
+      font-family: var(--font-hud);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+    }
+    .ecg-scale {
+      font-family: var(--font-hud);
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    /* Canvas fills the panel */
+    #ecgCanvas {
+      width: 100%;
+      height: 90px;
+      display: block;
+      border-radius: 8px;
+    }
+
+    /* ─── Randomise Button ───────────────────────────────────────────── */
+    .btn-randomize {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #ff2d55 0%, #c0003c 100%);
+      color: #fff;
+      font-family: var(--font-hud);
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 24px rgba(255,45,85,0.35), 0 1px 0 rgba(255,255,255,0.1) inset;
+      transition: transform 0.12s, box-shadow 0.12s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-randomize::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 60%);
+      border-radius: inherit;
+    }
+    .btn-randomize:active {
+      transform: scale(0.97);
+      box-shadow: 0 2px 12px rgba(255,45,85,0.4);
+    }
+
+    /* ─── Footer ─────────────────────────────────────────────────────── */
+    .footer {
+      text-align: center;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      padding-bottom: 4px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="monitor">
+
+    <!-- Header bar -->
+    <div class="header">
+      <span class="header-title">Cardiac Monitor</span>
+      <div class="header-right">
+        <div class="status-dot"></div>
+        <span id="liveLabel">LIVE</span>
+      </div>
+    </div>
+
+    <!-- Heart + BPM panel -->
+    <div class="heart-panel">
+      <div class="heart-wrap">
+        <!-- Inline SVG heart -->
+        <svg class="heart-svg" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
+          <path d="M50 85 C50 85 5 55 5 28 C5 14 16 5 28 5 C37 5 45 11 50 18 C55 11 63 5 72 5 C84 5 95 14 95 28 C95 55 50 85 50 85Z"
+                fill="#ff2d55" />
+        </svg>
+      </div>
+
+      <!-- Large BPM number -->
+      <div class="bpm-value" id="bpmDisplay">72</div>
+      <div class="bpm-label">BPM</div>
+
+      <!-- Heart-rate zone indicator -->
+      <div class="zone-badge" id="zoneBadge">NORMAL</div>
+    </div>
+
+    <!-- Stats row: min / avg / max -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value" id="statMin">--</div>
+        <div class="stat-label">Min BPM</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statAvg">--</div>
+        <div class="stat-label">Avg BPM</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statMax">--</div>
+        <div class="stat-label">Max BPM</div>
+      </div>
+    </div>
+
+    <!-- Scrolling ECG graph -->
+    <div class="ecg-panel">
+      <div class="ecg-header">
+        <span class="ecg-title">ECG — LEAD II</span>
+        <span class="ecg-scale">25 mm/s</span>
+      </div>
+      <canvas id="ecgCanvas"></canvas>
+    </div>
+
+    <!-- Randomize button -->
+    <button class="btn-randomize" id="btnRandomize">⟳ &nbsp; RANDOMIZE HEART RATE</button>
+
+    <div class="footer">SIMULATION ONLY · NOT FOR MEDICAL USE</div>
+  </div>
+
+
+  <script>
+    /* ═══════════════════════════════════════════════════════════════════
+       Heart Rate Monitor — JavaScript
+       ═══════════════════════════════════════════════════════════════════ */
+
+    // ── State ────────────────────────────────────────────────────────────
+    let bpm       = 72;          // current BPM
+    let bpmMin    = bpm;
+    let bpmMax    = bpm;
+    let bpmSum    = bpm;
+    let bpmCount  = 1;
+
+    // ECG canvas state
+    const canvas  = document.getElementById('ecgCanvas');
+    const ctx     = canvas.getContext('2d');
+    let   ecgX    = 0;           // current draw position (pixels)
+    let   ecgTime = 0;           // internal time counter
+
+    // DOM refs
+    const bpmDisplay = document.getElementById('bpmDisplay');
+    const heartSvg   = document.querySelector('.heart-svg');
+    const zoneBadge  = document.getElementById('zoneBadge');
+    const statMin    = document.getElementById('statMin');
+    const statAvg    = document.getElementById('statAvg');
+    const statMax    = document.getElementById('statMax');
+    const btnRandom  = document.getElementById('btnRandomize');
+
+
+    // ── Helpers ──────────────────────────────────────────────────────────
+
+    /** Map BPM → zone label + colours */
+    function getZone(b) {
+      if (b < 60)  return { label: 'LOW',      bg: '#1a2a4a', color: '#63b3ed', glow: 'rgba(99,179,237,0.4)' };
+      if (b < 80)  return { label: 'NORMAL',   bg: '#0d2a1a', color: '#00e676', glow: 'rgba(0,230,118,0.4)'  };
+      if (b < 100) return { label: 'ELEVATED', bg: '#2a2200', color: '#ffd600', glow: 'rgba(255,214,0,0.4)'  };
+      return               { label: 'HIGH',    bg: '#2a0a0a', color: '#ff2d55', glow: 'rgba(255,45,85,0.5)'  };
+    }
+
+    /** Update all UI elements for the current BPM */
+    function applyBPM(newBPM) {
+      bpm = newBPM;
+
+      // Update stats tracking
+      bpmMin    = Math.min(bpmMin, bpm);
+      bpmMax    = Math.max(bpmMax, bpm);
+      bpmSum   += bpm;
+      bpmCount += 1;
+
+      // Beat duration in seconds (60 / bpm), passed to CSS animation
+      const beatDuration = 60 / bpm;
+      heartSvg.style.setProperty('--beat-duration', beatDuration + 's');
+      // Re-trigger animation by briefly removing/adding the class trick
+      heartSvg.style.animationDuration = beatDuration + 's';
+
+      // BPM text
+      bpmDisplay.textContent = bpm;
+
+      // Zone badge
+      const zone = getZone(bpm);
+      zoneBadge.textContent         = zone.label;
+      zoneBadge.style.background    = zone.bg;
+      zoneBadge.style.color         = zone.color;
+      zoneBadge.style.boxShadow     = `0 0 12px ${zone.glow}`;
+
+      // Stats row
+      statMin.textContent = bpmMin;
+      statMax.textContent = bpmMax;
+      statAvg.textContent = Math.round(bpmSum / bpmCount);
+    }
+
+
+    // ── ECG Waveform ─────────────────────────────────────────────────────
+
+    /**
+     * Generate a single ECG sample at time t (in seconds).
+     * Produces a simplified PQRST wave pattern.
+     * @param {number} t  — time in the beat cycle [0, 1)
+     * @returns {number}  — amplitude in range roughly [−1, 1]
+     */
+    function ecgSample(t) {
+      // Helper: narrow Gaussian peak centred at c with half-width w
+      const gauss = (x, c, w, h) => h * Math.exp(-Math.pow((x - c) / w, 2));
+
+      let v = 0;
+      v += gauss(t, 0.08, 0.015, -0.2);  // P wave (small bump)
+      v += gauss(t, 0.12, 0.012,  0.35); // P wave (positive)
+      v += gauss(t, 0.18, 0.008, -0.15); // Q dip
+      v += gauss(t, 0.20, 0.012,  1.0);  // R spike (dominant peak)
+      v += gauss(t, 0.22, 0.008, -0.35); // S dip
+      v += gauss(t, 0.30, 0.030,  0.15); // T wave
+      return v;
+    }
+
+    /** Resize canvas to match its CSS pixel size (hi-DPI aware) */
+    function resizeCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width  = rect.width  * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+      ecgX = 0; // reset draw head after resize
+    }
+
+    /** Draw one frame of the scrolling ECG */
+    function drawECG(timestamp) {
+      const cssW = canvas.getBoundingClientRect().width;
+      const cssH = canvas.getBoundingClientRect().height;
+
+      // Number of pixels advanced per frame (speed scales with BPM)
+      const speed    = 1.6;         // px per frame (constant visual speed)
+      const beatPx   = (cssW * 0.55); // pixels per beat — keeps waveform proportional
+      const dt       = speed / beatPx * (bpm / 60); // time increment per pixel
+
+      // How many pixels to draw this frame (1 for smoothness)
+      const px = speed;
+
+      // Erase a small "cursor" strip ahead to create the scrolling effect
+      const eraseWidth = cssW * 0.08;
+      ctx.clearRect(ecgX, 0, eraseWidth, cssH);
+      ctx.fillStyle = '#0d1117';
+      ctx.fillRect(ecgX, 0, eraseWidth, cssH);
+
+      // Draw grid dots (subtle)
+      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      for (let gy = 10; gy < cssH; gy += 18) {
+        for (let gx = 0; gx < cssW; gx += 18) {
+          ctx.fillRect(gx, gy, 1, 1);
+        }
+      }
+
+      // Draw the ECG trace for this frame slice
+      const midY = cssH / 2;
+      const amp  = cssH * 0.38;
+
+      ctx.save();
+      ctx.beginPath();
+
+      // Shadow glow layers
+      ctx.shadowColor = '#00e676';
+      ctx.shadowBlur  = 8;
+      ctx.strokeStyle = '#00e676';
+      ctx.lineWidth   = 1.8;
+      ctx.lineJoin    = 'round';
+      ctx.lineCap     = 'round';
+
+      // Move to the previous pixel position to keep line continuous
+      const prevSample = ecgSample(((ecgTime - dt) % 1 + 1) % 1);
+      ctx.moveTo(ecgX, midY - prevSample * amp);
+
+      // Plot a few sub-steps for smoothness
+      for (let s = 0; s <= px; s++) {
+        const t  = ((ecgTime + (s / px) * dt) % 1 + 1) % 1;
+        const y  = midY - ecgSample(t) * amp;
+        const x  = (ecgX + s) % cssW;
+        ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      // Advance positions
+      ecgTime = (ecgTime + dt) % 1;
+      ecgX    = (ecgX + px)    % cssW;
+
+      requestAnimationFrame(drawECG);
+    }
+
+
+    // ── Randomize Button ─────────────────────────────────────────────────
+    btnRandom.addEventListener('click', () => {
+      const newBPM = Math.floor(Math.random() * 61) + 60; // 60–120
+      applyBPM(newBPM);
+
+      // Haptic feedback on mobile
+      if (navigator.vibrate) navigator.vibrate(30);
+    });
+
+
+    // ── Init ─────────────────────────────────────────────────────────────
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    applyBPM(bpm);          // apply initial BPM
+    requestAnimationFrame(drawECG); // start ECG loop
+  </script>
+</body>
+</html>
