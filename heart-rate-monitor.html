@@ -9,18 +9,20 @@
   <style>
     /* ─── CSS Custom Properties ─────────────────────────────────────── */
     :root {
-      --bg:        #080a0f;
-      --panel:     #0d1117;
-      --border:    #1a2030;
-      --red:       #ff2d55;
-      --red-glow:  rgba(255, 45, 85, 0.55);
-      --red-dim:   rgba(255, 45, 85, 0.15);
-      --green:     #00e676;
-      --green-glow:rgba(0, 230, 118, 0.5);
-      --text:      #e8ecf4;
-      --muted:     #4a5568;
-      --font-hud:  'Orbitron', monospace;
-      --font-body: 'Inter', sans-serif;
+      --bg:          #05080f;
+      --panel:       #090e1a;
+      --border:      #152040;
+      --blue:        #3d9bff;
+      --blue-mid:    #1a6fff;
+      --blue-dark:   #0a3dbf;
+      --blue-glow:   rgba(61, 155, 255, 0.55);
+      --blue-dim:    rgba(61, 155, 255, 0.12);
+      --cyan:        #00c8ff;
+      --cyan-glow:   rgba(0, 200, 255, 0.5);
+      --text:        #e8ecf4;
+      --muted:       #3a5070;
+      --font-hud:    'Orbitron', monospace;
+      --font-body:   'Inter', sans-serif;
     }
 
     /* ─── Reset & Base ───────────────────────────────────────────────── */
@@ -28,6 +30,7 @@
 
     body {
       background: var(--bg);
+      background-image: radial-gradient(ellipse at 50% 0%, rgba(26,111,255,0.08) 0%, transparent 65%);
       color: var(--text);
       font-family: var(--font-body);
       min-height: 100dvh;
@@ -39,17 +42,15 @@
       overflow-x: hidden;
     }
 
-    /* Subtle scanline texture overlay */
+    /* Subtle scanline texture */
     body::before {
       content: '';
       position: fixed;
       inset: 0;
       background: repeating-linear-gradient(
         0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,0.07) 2px,
-        rgba(0,0,0,0.07) 4px
+        transparent, transparent 2px,
+        rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px
       );
       pointer-events: none;
       z-index: 100;
@@ -81,8 +82,8 @@
     .status-dot {
       width: 8px; height: 8px;
       border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 8px var(--green-glow);
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan-glow);
       animation: pulse-dot 2s ease-in-out infinite;
     }
     @keyframes pulse-dot {
@@ -95,12 +96,12 @@
       gap: 8px;
       font-family: var(--font-hud);
       font-size: 11px;
-      color: var(--green);
+      color: var(--cyan);
     }
 
     /* ─── Heart Panel ────────────────────────────────────────────────── */
     .heart-panel {
-      background: var(--panel);
+      background: linear-gradient(160deg, #0b1428 0%, #090e1a 60%, #060c1f 100%);
       border: 1px solid var(--border);
       border-radius: 24px;
       padding: 36px 24px 28px;
@@ -111,30 +112,34 @@
       position: relative;
       overflow: hidden;
     }
-
+    /* Top highlight edge */
+    .heart-panel::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 10%; right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(61,155,255,0.4), transparent);
+    }
     /* Radial glow behind heart */
     .heart-panel::before {
       content: '';
       position: absolute;
-      top: 50%;
-      left: 50%;
+      top: 40%; left: 50%;
       transform: translate(-50%, -60%);
-      width: 220px; height: 220px;
-      background: radial-gradient(circle, var(--red-dim) 0%, transparent 70%);
+      width: 260px; height: 260px;
+      background: radial-gradient(circle, var(--blue-dim) 0%, transparent 70%);
       pointer-events: none;
     }
 
     /* ── SVG Heart ── */
     .heart-wrap {
-      position: relative;
       width: 110px; height: 110px;
       display: flex; align-items: center; justify-content: center;
     }
     .heart-svg {
       width: 100px; height: 100px;
-      filter: drop-shadow(0 0 18px var(--red-glow));
-      /* Animation duration set by JS via --beat-duration */
-      animation: heartbeat var(--beat-duration, 0.857s) ease-in-out infinite;
+      filter: drop-shadow(0 0 20px var(--blue-glow)) drop-shadow(0 0 6px var(--cyan-glow));
+      animation: heartbeat 0.857s ease-in-out infinite;
       transform-origin: center;
     }
     @keyframes heartbeat {
@@ -146,16 +151,18 @@
       100% { transform: scale(1);    }
     }
 
-    /* ── BPM Display ── */
+    /* ── BPM Display (blue gradient text) ── */
     .bpm-value {
       font-family: var(--font-hud);
       font-size: 88px;
       font-weight: 900;
       line-height: 1;
-      color: var(--red);
-      text-shadow: 0 0 30px var(--red-glow), 0 0 60px rgba(255,45,85,0.25);
+      background: linear-gradient(180deg, #7dc8ff 0%, #1a6fff 60%, #0a3dbf 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 18px rgba(61,155,255,0.6));
       letter-spacing: -2px;
-      transition: color 0.5s;
     }
     .bpm-label {
       font-family: var(--font-hud);
@@ -183,7 +190,7 @@
       gap: 10px;
     }
     .stat-card {
-      background: var(--panel);
+      background: linear-gradient(160deg, #0b1428 0%, #090e1a 100%);
       border: 1px solid var(--border);
       border-radius: 16px;
       padding: 14px 10px;
@@ -193,7 +200,7 @@
       font-family: var(--font-hud);
       font-size: 22px;
       font-weight: 700;
-      color: var(--text);
+      color: var(--blue);
     }
     .stat-label {
       font-size: 9px;
@@ -205,11 +212,10 @@
 
     /* ─── ECG Panel ──────────────────────────────────────────────────── */
     .ecg-panel {
-      background: var(--panel);
+      background: linear-gradient(160deg, #0b1428 0%, #090e1a 100%);
       border: 1px solid var(--border);
       border-radius: 20px;
       padding: 16px;
-      position: relative;
     }
     .ecg-header {
       display: flex;
@@ -228,8 +234,6 @@
       font-size: 10px;
       color: var(--muted);
     }
-
-    /* Canvas fills the panel */
     #ecgCanvas {
       width: 100%;
       height: 90px;
@@ -237,20 +241,134 @@
       border-radius: 8px;
     }
 
-    /* ─── Randomise Button ───────────────────────────────────────────── */
+    /* ─── Provider Panel ─────────────────────────────────────────────── */
+    .provider-panel {
+      background: linear-gradient(160deg, #0b1428 0%, #090e1a 100%);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 18px 20px;
+    }
+    .provider-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .provider-icon {
+      width: 34px; height: 34px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #1a6fff 0%, #0a3dbf 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 2px 10px rgba(26,111,255,0.4);
+      flex-shrink: 0;
+    }
+    .provider-info { flex: 1; }
+    .provider-name {
+      font-family: var(--font-hud);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--text);
+    }
+    .provider-sub {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+    .provider-connected {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--font-hud);
+      font-size: 9px;
+      color: var(--cyan);
+      white-space: nowrap;
+    }
+    .provider-connected-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 6px var(--cyan-glow);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    /* Data preview */
+    .provider-data {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      border: 1px solid rgba(21,32,64,0.8);
+    }
+    .provider-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .provider-row-label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .provider-row-value {
+      font-family: var(--font-hud);
+      font-size: 11px;
+      color: var(--text);
+    }
+
+    /* Send button */
+    .btn-send {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #1a6fff 0%, #0a3dbf 100%);
+      color: #fff;
+      font-family: var(--font-hud);
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(26,111,255,0.4), 0 1px 0 rgba(255,255,255,0.1) inset;
+      transition: transform 0.12s, box-shadow 0.12s, background 0.4s;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+    }
+    .btn-send::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 60%);
+      border-radius: inherit;
+      pointer-events: none;
+    }
+    .btn-send:active  { transform: scale(0.97); }
+    .btn-send.sending { opacity: 0.65; cursor: default; }
+    .btn-send.sent    {
+      background: linear-gradient(135deg, #00a86b 0%, #007a50 100%);
+      box-shadow: 0 4px 20px rgba(0,168,107,0.4);
+    }
+
+    /* ─── Randomize Button ───────────────────────────────────────────── */
     .btn-randomize {
       width: 100%;
       padding: 16px;
       border: none;
       border-radius: 16px;
-      background: linear-gradient(135deg, #ff2d55 0%, #c0003c 100%);
+      background: linear-gradient(135deg, #1a6fff 0%, #0a3dbf 100%);
       color: #fff;
       font-family: var(--font-hud);
       font-size: 13px;
       letter-spacing: 0.2em;
       font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 4px 24px rgba(255,45,85,0.35), 0 1px 0 rgba(255,255,255,0.1) inset;
+      box-shadow: 0 4px 24px rgba(26,111,255,0.4), 0 1px 0 rgba(255,255,255,0.1) inset;
       transition: transform 0.12s, box-shadow 0.12s;
       position: relative;
       overflow: hidden;
@@ -261,10 +379,11 @@
       inset: 0;
       background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 60%);
       border-radius: inherit;
+      pointer-events: none;
     }
     .btn-randomize:active {
       transform: scale(0.97);
-      box-shadow: 0 2px 12px rgba(255,45,85,0.4);
+      box-shadow: 0 2px 12px rgba(26,111,255,0.4);
     }
 
     /* ─── Footer ─────────────────────────────────────────────────────── */
@@ -279,7 +398,6 @@
 </head>
 
 <body>
-
   <div class="monitor">
 
     <!-- Header bar -->
@@ -287,17 +405,24 @@
       <span class="header-title">Cardiac Monitor</span>
       <div class="header-right">
         <div class="status-dot"></div>
-        <span id="liveLabel">LIVE</span>
+        <span>LIVE</span>
       </div>
     </div>
 
     <!-- Heart + BPM panel -->
     <div class="heart-panel">
       <div class="heart-wrap">
-        <!-- Inline SVG heart -->
+        <!-- Heart with blue gradient fill -->
         <svg class="heart-svg" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="heartGrad" x1="0%" y1="0%" x2="60%" y2="100%">
+              <stop offset="0%"   stop-color="#7dc8ff" />
+              <stop offset="50%"  stop-color="#1a6fff" />
+              <stop offset="100%" stop-color="#0a2a8f" />
+            </linearGradient>
+          </defs>
           <path d="M50 85 C50 85 5 55 5 28 C5 14 16 5 28 5 C37 5 45 11 50 18 C55 11 63 5 72 5 C84 5 95 14 95 28 C95 55 50 85 50 85Z"
-                fill="#ff2d55" />
+                fill="url(#heartGrad)" />
         </svg>
       </div>
 
@@ -309,7 +434,7 @@
       <div class="zone-badge" id="zoneBadge">NORMAL</div>
     </div>
 
-    <!-- Stats row: min / avg / max -->
+    <!-- Stats row -->
     <div class="stats-row">
       <div class="stat-card">
         <div class="stat-value" id="statMin">--</div>
@@ -334,6 +459,50 @@
       <canvas id="ecgCanvas"></canvas>
     </div>
 
+    <!-- ── Send Info to Provider Panel ── -->
+    <div class="provider-panel">
+
+      <!-- Provider identity -->
+      <div class="provider-header">
+        <div class="provider-icon">🏥</div>
+        <div class="provider-info">
+          <div class="provider-name">DR. SARAH CHEN, MD</div>
+          <div class="provider-sub">Cardiology · St. Luke's Medical Center</div>
+        </div>
+        <div class="provider-connected">
+          <div class="provider-connected-dot"></div>
+          LINKED
+        </div>
+      </div>
+
+      <!-- Live data snapshot to be sent -->
+      <div class="provider-data">
+        <div class="provider-row">
+          <span class="provider-row-label">Current BPM</span>
+          <span class="provider-row-value" id="provBPM">72</span>
+        </div>
+        <div class="provider-row">
+          <span class="provider-row-label">Session Avg</span>
+          <span class="provider-row-value" id="provAvg">72</span>
+        </div>
+        <div class="provider-row">
+          <span class="provider-row-label">Zone</span>
+          <span class="provider-row-value" id="provZone">NORMAL</span>
+        </div>
+        <div class="provider-row">
+          <span class="provider-row-label">Timestamp</span>
+          <span class="provider-row-value" id="provTime">--:--:--</span>
+        </div>
+      </div>
+
+      <!-- Non-functional send button with animated states -->
+      <button class="btn-send" id="btnSend">
+        <span id="btnSendIcon">📤</span>
+        <span id="btnSendText">SEND INFO TO PROVIDER</span>
+      </button>
+
+    </div>
+
     <!-- Randomize button -->
     <button class="btn-randomize" id="btnRandomize">⟳ &nbsp; RANDOMIZE HEART RATE</button>
 
@@ -347,17 +516,17 @@
        ═══════════════════════════════════════════════════════════════════ */
 
     // ── State ────────────────────────────────────────────────────────────
-    let bpm       = 72;          // current BPM
-    let bpmMin    = bpm;
-    let bpmMax    = bpm;
-    let bpmSum    = bpm;
-    let bpmCount  = 1;
+    let bpm      = 72;
+    let bpmMin   = bpm;
+    let bpmMax   = bpm;
+    let bpmSum   = bpm;
+    let bpmCount = 1;
 
-    // ECG canvas state
+    // ECG canvas
     const canvas  = document.getElementById('ecgCanvas');
     const ctx     = canvas.getContext('2d');
-    let   ecgX    = 0;           // current draw position (pixels)
-    let   ecgTime = 0;           // internal time counter
+    let   ecgX    = 0;
+    let   ecgTime = 0;
 
     // DOM refs
     const bpmDisplay = document.getElementById('bpmDisplay');
@@ -367,140 +536,141 @@
     const statAvg    = document.getElementById('statAvg');
     const statMax    = document.getElementById('statMax');
     const btnRandom  = document.getElementById('btnRandomize');
+    const btnSend    = document.getElementById('btnSend');
+    const btnSendText= document.getElementById('btnSendText');
+    const btnSendIcon= document.getElementById('btnSendIcon');
+    const provBPM    = document.getElementById('provBPM');
+    const provAvg    = document.getElementById('provAvg');
+    const provZone   = document.getElementById('provZone');
+    const provTime   = document.getElementById('provTime');
 
 
     // ── Helpers ──────────────────────────────────────────────────────────
 
-    /** Map BPM → zone label + colours */
+    /** Map BPM → zone label + badge colours */
     function getZone(b) {
-      if (b < 60)  return { label: 'LOW',      bg: '#1a2a4a', color: '#63b3ed', glow: 'rgba(99,179,237,0.4)' };
-      if (b < 80)  return { label: 'NORMAL',   bg: '#0d2a1a', color: '#00e676', glow: 'rgba(0,230,118,0.4)'  };
-      if (b < 100) return { label: 'ELEVATED', bg: '#2a2200', color: '#ffd600', glow: 'rgba(255,214,0,0.4)'  };
-      return               { label: 'HIGH',    bg: '#2a0a0a', color: '#ff2d55', glow: 'rgba(255,45,85,0.5)'  };
+      if (b < 60)  return { label: 'LOW',      bg: '#0d1a2e', color: '#63b3ed', glow: 'rgba(99,179,237,0.4)'  };
+      if (b < 80)  return { label: 'NORMAL',   bg: '#061a30', color: '#00c8ff', glow: 'rgba(0,200,255,0.4)'   };
+      if (b < 100) return { label: 'ELEVATED', bg: '#1a1a06', color: '#ffd600', glow: 'rgba(255,214,0,0.4)'   };
+      return               { label: 'HIGH',    bg: '#1a0606', color: '#ff6b6b', glow: 'rgba(255,107,107,0.5)' };
     }
 
-    /** Update all UI elements for the current BPM */
+    /** Current time as HH:MM:SS */
+    function getTimestamp() {
+      return new Date().toLocaleTimeString('en-US', { hour12: false });
+    }
+
+    /** Apply a new BPM value and refresh all UI */
     function applyBPM(newBPM) {
       bpm = newBPM;
 
-      // Update stats tracking
+      // Rolling stats
       bpmMin    = Math.min(bpmMin, bpm);
       bpmMax    = Math.max(bpmMax, bpm);
       bpmSum   += bpm;
       bpmCount += 1;
+      const avg  = Math.round(bpmSum / bpmCount);
 
-      // Beat duration in seconds (60 / bpm), passed to CSS animation
-      const beatDuration = 60 / bpm;
-      heartSvg.style.setProperty('--beat-duration', beatDuration + 's');
-      // Re-trigger animation by briefly removing/adding the class trick
-      heartSvg.style.animationDuration = beatDuration + 's';
+      // Heart animation speed (beat duration = 60 / bpm seconds)
+      heartSvg.style.animationDuration = (60 / bpm) + 's';
 
-      // BPM text
+      // BPM readout
       bpmDisplay.textContent = bpm;
 
       // Zone badge
       const zone = getZone(bpm);
-      zoneBadge.textContent         = zone.label;
-      zoneBadge.style.background    = zone.bg;
-      zoneBadge.style.color         = zone.color;
-      zoneBadge.style.boxShadow     = `0 0 12px ${zone.glow}`;
+      zoneBadge.textContent      = zone.label;
+      zoneBadge.style.background = zone.bg;
+      zoneBadge.style.color      = zone.color;
+      zoneBadge.style.boxShadow  = `0 0 12px ${zone.glow}`;
 
-      // Stats row
+      // Stats cards
       statMin.textContent = bpmMin;
       statMax.textContent = bpmMax;
-      statAvg.textContent = Math.round(bpmSum / bpmCount);
+      statAvg.textContent = avg;
+
+      // Provider panel live snapshot
+      provBPM.textContent  = bpm;
+      provAvg.textContent  = avg;
+      provZone.textContent = zone.label;
+      provTime.textContent = getTimestamp();
     }
 
 
     // ── ECG Waveform ─────────────────────────────────────────────────────
 
     /**
-     * Generate a single ECG sample at time t (in seconds).
-     * Produces a simplified PQRST wave pattern.
-     * @param {number} t  — time in the beat cycle [0, 1)
-     * @returns {number}  — amplitude in range roughly [−1, 1]
+     * ECG sample at beat-cycle position t ∈ [0,1).
+     * Simplified PQRST waveform using Gaussian peaks.
      */
     function ecgSample(t) {
-      // Helper: narrow Gaussian peak centred at c with half-width w
       const gauss = (x, c, w, h) => h * Math.exp(-Math.pow((x - c) / w, 2));
-
       let v = 0;
-      v += gauss(t, 0.08, 0.015, -0.2);  // P wave (small bump)
-      v += gauss(t, 0.12, 0.012,  0.35); // P wave (positive)
+      v += gauss(t, 0.08, 0.015, -0.20); // P wave
+      v += gauss(t, 0.12, 0.012,  0.35); // P wave positive
       v += gauss(t, 0.18, 0.008, -0.15); // Q dip
-      v += gauss(t, 0.20, 0.012,  1.0);  // R spike (dominant peak)
+      v += gauss(t, 0.20, 0.012,  1.00); // R spike
       v += gauss(t, 0.22, 0.008, -0.35); // S dip
       v += gauss(t, 0.30, 0.030,  0.15); // T wave
       return v;
     }
 
-    /** Resize canvas to match its CSS pixel size (hi-DPI aware) */
+    /** Resize canvas to display pixel size (hi-DPI aware) */
     function resizeCanvas() {
-      const dpr = window.devicePixelRatio || 1;
+      const dpr  = window.devicePixelRatio || 1;
       const rect = canvas.getBoundingClientRect();
       canvas.width  = rect.width  * dpr;
       canvas.height = rect.height * dpr;
       ctx.scale(dpr, dpr);
-      ecgX = 0; // reset draw head after resize
+      ecgX = 0;
     }
 
-    /** Draw one frame of the scrolling ECG */
-    function drawECG(timestamp) {
+    /** Draw one frame of the scrolling ECG with a blue trace */
+    function drawECG() {
       const cssW = canvas.getBoundingClientRect().width;
       const cssH = canvas.getBoundingClientRect().height;
 
-      // Number of pixels advanced per frame (speed scales with BPM)
-      const speed    = 1.6;         // px per frame (constant visual speed)
-      const beatPx   = (cssW * 0.55); // pixels per beat — keeps waveform proportional
-      const dt       = speed / beatPx * (bpm / 60); // time increment per pixel
+      const speed  = 1.6;            // px per frame
+      const beatPx = cssW * 0.55;    // pixels per beat
+      const dt     = speed / beatPx * (bpm / 60);
+      const px     = speed;
 
-      // How many pixels to draw this frame (1 for smoothness)
-      const px = speed;
+      // Erase advancing cursor strip
+      ctx.fillStyle = '#090e1a';
+      ctx.fillRect(ecgX, 0, cssW * 0.08, cssH);
 
-      // Erase a small "cursor" strip ahead to create the scrolling effect
-      const eraseWidth = cssW * 0.08;
-      ctx.clearRect(ecgX, 0, eraseWidth, cssH);
-      ctx.fillStyle = '#0d1117';
-      ctx.fillRect(ecgX, 0, eraseWidth, cssH);
-
-      // Draw grid dots (subtle)
-      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      // Subtle blue grid dots
+      ctx.fillStyle = 'rgba(61,155,255,0.06)';
       for (let gy = 10; gy < cssH; gy += 18) {
         for (let gx = 0; gx < cssW; gx += 18) {
           ctx.fillRect(gx, gy, 1, 1);
         }
       }
 
-      // Draw the ECG trace for this frame slice
+      // Blue/cyan glowing ECG line
       const midY = cssH / 2;
       const amp  = cssH * 0.38;
 
       ctx.save();
       ctx.beginPath();
-
-      // Shadow glow layers
-      ctx.shadowColor = '#00e676';
-      ctx.shadowBlur  = 8;
-      ctx.strokeStyle = '#00e676';
+      ctx.shadowColor = '#00c8ff';
+      ctx.shadowBlur  = 10;
+      ctx.strokeStyle = '#3d9bff';
       ctx.lineWidth   = 1.8;
       ctx.lineJoin    = 'round';
       ctx.lineCap     = 'round';
 
-      // Move to the previous pixel position to keep line continuous
-      const prevSample = ecgSample(((ecgTime - dt) % 1 + 1) % 1);
-      ctx.moveTo(ecgX, midY - prevSample * amp);
+      const prevT = ((ecgTime - dt) % 1 + 1) % 1;
+      ctx.moveTo(ecgX, midY - ecgSample(prevT) * amp);
 
-      // Plot a few sub-steps for smoothness
       for (let s = 0; s <= px; s++) {
-        const t  = ((ecgTime + (s / px) * dt) % 1 + 1) % 1;
-        const y  = midY - ecgSample(t) * amp;
-        const x  = (ecgX + s) % cssW;
-        ctx.lineTo(x, y);
+        const t = ((ecgTime + (s / px) * dt) % 1 + 1) % 1;
+        ctx.lineTo((ecgX + s) % cssW, midY - ecgSample(t) * amp);
       }
       ctx.stroke();
       ctx.restore();
 
-      // Advance positions
+      // Advance counters
       ecgTime = (ecgTime + dt) % 1;
       ecgX    = (ecgX + px)    % cssW;
 
@@ -508,21 +678,51 @@
     }
 
 
-    // ── Randomize Button ─────────────────────────────────────────────────
-    btnRandom.addEventListener('click', () => {
-      const newBPM = Math.floor(Math.random() * 61) + 60; // 60–120
-      applyBPM(newBPM);
+    // ── Send to Provider (visual-only, non-functional) ────────────────────
+    btnSend.addEventListener('click', () => {
+      // Prevent double-clicks during animation
+      if (btnSend.classList.contains('sending') || btnSend.classList.contains('sent')) return;
 
-      // Haptic feedback on mobile
+      // Step 1: "Sending…"
+      btnSend.classList.add('sending');
+      btnSendIcon.textContent = '⏳';
+      btnSendText.textContent = 'SENDING…';
+
+      // Step 2: After 1.8 s → "Sent"
+      setTimeout(() => {
+        btnSend.classList.remove('sending');
+        btnSend.classList.add('sent');
+        btnSendIcon.textContent = '✓';
+        btnSendText.textContent = 'DATA SENT SUCCESSFULLY';
+
+        // Step 3: After 3 s → reset
+        setTimeout(() => {
+          btnSend.classList.remove('sent');
+          btnSendIcon.textContent = '📤';
+          btnSendText.textContent = 'SEND INFO TO PROVIDER';
+        }, 3000);
+      }, 1800);
+
+      if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+    });
+
+
+    // ── Randomize Heart Rate ──────────────────────────────────────────────
+    btnRandom.addEventListener('click', () => {
+      applyBPM(Math.floor(Math.random() * 61) + 60); // 60–120 BPM
       if (navigator.vibrate) navigator.vibrate(30);
     });
+
+
+    // ── Live timestamp ticker ─────────────────────────────────────────────
+    setInterval(() => { provTime.textContent = getTimestamp(); }, 1000);
 
 
     // ── Init ─────────────────────────────────────────────────────────────
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
-    applyBPM(bpm);          // apply initial BPM
-    requestAnimationFrame(drawECG); // start ECG loop
+    applyBPM(bpm);
+    requestAnimationFrame(drawECG);
   </script>
 </body>
 </html>
